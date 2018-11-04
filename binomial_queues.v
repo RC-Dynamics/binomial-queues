@@ -134,4 +134,44 @@ Fixpoint priq' (i: nat) (l: list tree) : Prop :=
 
 Definition priq (q: priqueue) : Prop := priq' 0 q.
 
+Theorem empty_priq : priq empty.
+Proof. reflexivity. Qed.
+
+Theorem smash_valid : forall (n: nat) (t: tree) (u: tree),
+  pow2heap n t -> pow2heap n u -> pow2heap (S n) (smash t u).
+Proof. Admitted.
+
+Theorem insert_priq : forall (x: nat) (q: priqueue),
+  priq q -> priq (insert x q).
+Proof.
+  intros x q. induction q as [| q' q''].
+    - intros. unfold insert. simpl. unfold priq. simpl. split.
+      + right. reflexivity.
+      + reflexivity.
+    - intros. inversion H. inversion H0.
+      + rewrite H2. unfold insert. simpl. unfold priq. simpl. split.
+        * right. reflexivity.
+        * apply H1.
+      + Abort.
+
+
+Theorem carry_valid : forall (n: nat) (q: priqueue),
+  priq' n q -> forall (t: tree), (t = Leaf \/ pow2heap n t) ->
+    priq' n (carry q t).
+Proof. intros n q G t H. induction q.
+  - intros. inversion H.
+     + rewrite H0. unfold carry. apply G.
+     + destruct t.
+       * unfold carry. unfold priq'. split.
+         { apply H. }
+         { reflexivity. }
+       * unfold carry. apply G.
+   - destruct t.
+     + inversion H.
+       * inversion H0.
+       * Abort. 
+        
+
+
+
 
