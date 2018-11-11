@@ -141,37 +141,65 @@ Theorem smash_valid : forall (n: nat) (t: tree) (u: tree),
   pow2heap n t -> pow2heap n u -> pow2heap (S n) (smash t u).
 Proof. Admitted.
 
+Lemma insert_priq_: forall (x: nat) (q: priqueue) (a: tree),
+  priq (insert x q) -> priq (insert x (a :: q)).
+Proof. Admitted.
+
+Lemma priq_list: forall (a: tree) (q: priqueue),
+  priq (a :: q) -> priq q.
+Proof. Admitted.
+
 Theorem insert_priq : forall (x: nat) (q: priqueue),
   priq q -> priq (insert x q).
 Proof.
-  intros x q. induction q as [| q' q''].
-    - intros. unfold insert. simpl. unfold priq. simpl. split.
+  intros. induction q.
+    - unfold insert. simpl. unfold priq. simpl. split.
       + right. reflexivity.
       + reflexivity.
-    - intros. inversion H. inversion H0.
-      + rewrite H2. unfold insert. simpl. unfold priq. simpl. split.
-        * right. reflexivity.
-        * apply H1.
-      + Abort.
+    - apply insert_priq_. apply IHq. apply priq_list with (a:= a). apply H.
+Qed.
 
+Lemma priq'_carry: forall (t: tree) (a: tree) (n: nat) (q: priqueue),
+  priq' n (carry q t) -> priq' n (carry (a :: q) t).
+Proof. Admitted.
+
+Lemma priq'_list: forall (n: nat) (q: priqueue) (a: tree),
+  priq' n (a :: q) -> priq' n q.
+Proof. Admitted.
 
 Theorem carry_valid : forall (n: nat) (q: priqueue),
   priq' n q -> forall (t: tree), (t = Leaf \/ pow2heap n t) ->
     priq' n (carry q t).
-Proof. intros n q G t H. induction q.
-  - intros. inversion H.
-     + rewrite H0. unfold carry. apply G.
+Proof. intros. induction q.
+  - intros. inversion H0.
+     + rewrite H1. unfold carry. apply H.
      + destruct t.
        * unfold carry. unfold priq'. split.
-         { apply H. }
+         { apply H0. }
          { reflexivity. }
-       * unfold carry. apply G.
-   - destruct t.
-     + inversion H.
-       * inversion H0.
-       * Abort. 
-        
+       * unfold carry. apply H.
+   - apply priq'_carry. apply IHq. apply priq'_list with (a:= a). apply H.
+Qed.
 
+Lemma priq'_join1: forall (n: nat) (a: tree) (c: tree) (p: priqueue) (q: priqueue),
+  priq' n (join p q c) -> priq' n (join (a :: p) q c).
+Proof. Admitted.
 
+Theorem join_valid: forall (p: priqueue) (q: priqueue) (n: nat) (c: tree),
+  priq' n p -> priq' n q -> (c = Leaf \/ pow2heap n c) -> priq' n (join p q c).
+Proof.
+  intros p q n c. induction p. intros.
+    - unfold join. apply carry_valid.
+      + apply H0.
+      + apply H1.
+    - intros. apply priq'_join1. apply IHp.
+      + apply priq'_list with (a:= a). apply H.
+      + apply H0.
+      + apply H1.
+Qed.
 
-
+Theorem merge_priq: forall (p: priqueue) (q: priqueue),
+  priq p -> priq q -> priq (merge p q).
+Proof.
+  intros. unfold merge. apply join_valid; auto.
+Qed.
