@@ -139,7 +139,7 @@ Proof. reflexivity. Qed.
 
 Theorem smash_valid : forall (n: nat) (t: tree) (u: tree),
   pow2heap n t -> pow2heap n u -> pow2heap (S n) (smash t u).
-Proof. intros. induction t, u.
+Proof. intros.
   Admitted.
 
 Lemma priq'_carry: forall (t: tree) (a: tree) (n: nat) (q: priqueue),
@@ -169,8 +169,12 @@ Theorem insert_priq : forall (x: nat) (q: priqueue),
 Proof.
   intros. induction q.
   - unfold priq. simpl. intuition.
-  - 
-Admitted.
+  - inversion H. unfold insert. apply carry_valid.
+    + simpl. split.
+      * apply H0.
+      * apply H1.
+    + simpl. intuition.
+Qed.
 
 Lemma priq'_join1: forall (n: nat) (a: tree) (c: tree) (p: priqueue) (q: priqueue),
   priq' n (join p q c) -> priq' n (join (a :: p) q c).
