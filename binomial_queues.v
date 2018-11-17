@@ -160,7 +160,7 @@ Theorem carry_self: forall (q: priqueue),
   carry q Leaf = q.
 Proof.
   intros. destruct q.
-    - reflexivity.
+  - simpl. reflexivity.
     - unfold carry. destruct t.
       + reflexivity.
       + reflexivity.
@@ -171,21 +171,21 @@ Theorem carry_valid : forall (n: nat) (q: priqueue),
   priq' n (carry q t).
 Proof.
   intros. induction q.
-    - unfold carry. destruct t.
-      + simpl. split.
-        * intuition.
-        * reflexivity.
-      + apply H.
-    - destruct t.
-      + destruct a.
-        * unfold carry. fold carry. simpl. split.
-          { left. reflexivity. }
-          { inversion H. destruct t2, a2.
-            { rewrite carry_self. apply H2. }
-            { rewrite carry_self. apply H2. }
-            { rewrite carry_self. apply H2. }
-            { destruct Nat.ltb.
-              { 
+  - unfold carry. destruct t.
+    + simpl. split.
+      * simpl in H0. apply H0.
+      * apply I.
+    + apply H.
+  - destruct t.
+    + destruct a.
+      * unfold carry. fold carry. simpl. split.
+        { left. reflexivity. }
+        { inversion H. destruct t2, a2.
+          { rewrite carry_self. apply H2. }
+          { rewrite carry_self. apply H2. }
+          { rewrite carry_self. apply H2. }
+          { destruct Nat.ltb.
+            { 
 
 inversion H. inversion H1.
       + rewrite H3. simpl. intuition.
