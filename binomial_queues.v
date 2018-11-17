@@ -141,14 +141,20 @@ Theorem smash_valid : forall (n: nat) (t: tree) (u: tree),
   pow2heap n t -> pow2heap n u -> pow2heap (S n) (smash t u).
 Proof.
   intros. destruct t, u.
-    - unfold smash. destruct t2, u2.
-      * simpl in H. inversion H.
-      * simpl in H. inversion H.
-      * simpl in H0. inversion H0.
-      * destruct Nat.ltb.
-        + simpl. intuition.
+    - destruct t2, u2.
+      + simpl in H. inversion H.
+      + simpl in H. inversion H.
+      + simpl in H0. inversion H0.
+      + unfold smash. destruct (Nat.ltb k0 k) as []eqn:?.
+        * simpl. intuition. Search (_ >= _).
           apply Compare_dec.not_lt. Search (~ _ < _).
-          apply PeanoNat.Nat.lt_asymm. Search (_ < _). Admitted.
+          apply PeanoNat.Nat.lt_asymm. apply PeanoNat.Nat.ltb_lt. apply Heqb.
+        * simpl. intuition. apply Compare_dec.not_lt.
+          apply PeanoNat.Nat.ltb_nlt. apply Heqb.
+   - inversion H0.
+   - inversion H.
+   - inversion H.
+Qed.
 
 (*
 Theorem carry_valid : forall (n: nat) (q: priqueue),
@@ -178,16 +184,7 @@ Proof.
 Theorem carry_valid : forall (n: nat) (q: priqueue),
   priq' n q -> forall (t: tree), (t = Leaf \/ pow2heap n t) ->
     priq' n (carry q t).
-Proof. intros. induction q.
-  - intros. inversion H0.
-     + rewrite H1. unfold carry. apply H.
-     + destruct t.
-       * unfold carry. unfold priq'. split.
-         { apply H0. }
-         { reflexivity. }
-       * unfold carry. apply H.
-   - apply priq'_carry. apply IHq. apply priq'_list with (a:= a). apply H.
-Qed.
+Proof. Admitted.
 
 Theorem insert_priq : forall (x: nat) (q: priqueue),
   priq q -> priq (insert x q).
@@ -250,4 +247,9 @@ Inductive tree_elems: tree -> list key -> Prop :=
 
 Theorem tree_elems_ext: forall (t: tree) (e1: list key) (e2: list key),
   Permutation e1 e2 -> tree_elems t e1 -> tree_elems t e2.
-Proof. Admitted.
+Proof.
+  intros. destruct e2 as [| e e']. 
+    - destruct e1 as [| a a'].
+      + apply H0.
+      + destruct t.
+        * inversion H0.
