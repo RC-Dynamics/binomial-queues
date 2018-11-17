@@ -156,20 +156,38 @@ Proof.
    - inversion H.
 Qed.
 
-(*
+Theorem carry_self: forall (q: priqueue),
+  carry q Leaf = q.
+Proof.
+  intros. destruct q.
+    - reflexivity.
+    - unfold carry. destruct t.
+      + reflexivity.
+      + reflexivity.
+Qed.
+
 Theorem carry_valid : forall (n: nat) (q: priqueue),
   priq' n q -> forall (t: tree), (t = Leaf \/ pow2heap n t) ->
   priq' n (carry q t).
 Proof.
   intros. induction q.
-    - inversion H0.
-      + rewrite H1. intuition.
-      + destruct t.
-        * simpl. split.
-          { intuition. }
-          { intuition. }
+    - unfold carry. destruct t.
+      + simpl. split.
         * intuition.
-    - inversion H. inversion H1.
+        * reflexivity.
+      + apply H.
+    - destruct t.
+      + destruct a.
+        * unfold carry. fold carry. simpl. split.
+          { left. reflexivity. }
+          { inversion H. destruct t2, a2.
+            { rewrite carry_self. apply H2. }
+            { rewrite carry_self. apply H2. }
+            { rewrite carry_self. apply H2. }
+            { destruct Nat.ltb.
+              { 
+
+inversion H. inversion H1.
       + rewrite H3. simpl. intuition.
       + inversion H0.
         * rewrite H4. destruct a.
@@ -178,13 +196,14 @@ Proof.
         * destruct a, t.
           { unfold carry. fold carry. unfold priq'. split.
             { left. reflexivity. }
-            { fold priq'. Admitted.
-*)
+            { fold priq'.
 
+(*
 Theorem carry_valid : forall (n: nat) (q: priqueue),
   priq' n q -> forall (t: tree), (t = Leaf \/ pow2heap n t) ->
     priq' n (carry q t).
 Proof. Admitted.
+*)
 
 Theorem insert_priq : forall (x: nat) (q: priqueue),
   priq q -> priq (insert x q).
@@ -221,12 +240,7 @@ Proof.
           { apply carry_valid.
             { apply H0. }
             { right. apply H2. } }
-    - destruct c.
-      + destruct q.
-        { destruct a.
-          { unfold join. apply carry_valid. intuition. apply H1. }
-          { unfold join. apply carry_valid. intuition. intuition. } }
-        { Admitted.
+    - Admitted.
 
 Theorem merge_priq: forall (p: priqueue) (q: priqueue),
   priq p -> priq q -> priq (merge p q).
