@@ -4,7 +4,7 @@ Open Scope list_scope.
 
 Notation "a >? b" := (Nat.ltb b a)
                      (at level 70, only parsing) : nat_scope.
-
+ 
 Definition key := nat.
 
 Inductive tree : Type :=
@@ -156,54 +156,37 @@ Proof.
    - inversion H.
 Qed.
 
-Theorem carry_self: forall (q: priqueue),
-  carry q Leaf = q.
+Theorem priq'_valid: forall (n: nat) (t: tree) (l: priqueue),
+  priq' (S n) l -> (t = Leaf \/ pow2heap n t) -> priq' n (t :: l).
 Proof.
-  intros. destruct q.
-  - simpl. reflexivity.
-    - unfold carry. destruct t.
-      + reflexivity.
-      + reflexivity.
+  intros. destruct t.
+    - simpl. split.
+      + apply H0.
+      + apply H.
+    - simpl. split.
+      + left. reflexivity.
+      + apply H. 
 Qed.
 
 Theorem carry_valid : forall (n: nat) (q: priqueue),
   priq' n q -> forall (t: tree), (t = Leaf \/ pow2heap n t) ->
   priq' n (carry q t).
 Proof.
-  intros. induction q.
-  - unfold carry. destruct t.
-    + simpl. split.
-      * simpl in H0. apply H0.
-      * apply I.
-    + apply H.
-  - destruct t.
-    + destruct a.
-      * unfold carry. fold carry. simpl. split.
-        { left. reflexivity. }
-        { inversion H. destruct t2, a2.
-          { rewrite carry_self. apply H2. }
-          { rewrite carry_self. apply H2. }
-          { rewrite carry_self. apply H2. }
-          { destruct Nat.ltb.
-            { 
-
-inversion H. inversion H1.
-      + rewrite H3. simpl. intuition.
-      + inversion H0.
-        * rewrite H4. destruct a.
-          { simpl. intuition. }
-          { simpl. intuition. }
-        * destruct a, t.
-          { unfold carry. fold carry. unfold priq'. split.
-            { left. reflexivity. }
-            { fold priq'.
-
-(*
-Theorem carry_valid : forall (n: nat) (q: priqueue),
-  priq' n q -> forall (t: tree), (t = Leaf \/ pow2heap n t) ->
-    priq' n (carry q t).
-Proof. Admitted.
-*)
+  intuition.
+    - rewrite H1. destruct q.
+      + now constructor.
+      + inversion H. simpl. destruct t0.
+        * apply H.
+        * apply H.
+    - induction q.
+      + destruct t.
+        * simpl. split.
+          { right. apply H1. }
+          { reflexivity. }
+        * simpl. reflexivity.
+      + destruct t.
+        * simpl. destruct q, a.
+          { simpl. Admitted.
 
 Theorem insert_priq : forall (x: nat) (q: priqueue),
   priq q -> priq (insert x q).
@@ -220,28 +203,116 @@ Qed.
 Theorem join_valid: forall (p: priqueue) (q: priqueue) (n: nat) (c: tree),
   priq' n p -> priq' n q -> (c = Leaf \/ pow2heap n c) -> priq' n (join p q c).
 Proof.
-  intros. induction p.
-    - intuition.
-      + rewrite H2. simpl. destruct q.
+  induction p.
+    - intros. destruct q, c.
+      + simpl. split.
+        * apply H1.
         * reflexivity.
-        * destruct t.
-          { unfold carry. apply H0. }
-          { unfold carry. apply H0. }
-      + unfold join. destruct q.
-        * destruct c.
-          { unfold carry. unfold priq'. split.
-            { right. apply H2. }
-            { reflexivity. } }
-          { unfold carry. apply H0. }
-        * destruct c.
-          { apply carry_valid.
-            { apply H0. }
-            { right. apply H2. } }
-          { apply carry_valid.
-            { apply H0. }
-            { right. apply H2. } }
-    - Admitted.
-
+      + simpl. reflexivity.
+      + unfold join. apply carry_valid.
+        * apply H0.
+        * apply H1.
+      + unfold join. apply carry_valid.
+        * apply H0.
+        * apply H1.
+    - intros. destruct a, q, c.
+      + unfold join. apply carry_valid.
+        * apply H.
+        * apply H1.
+      + unfold join. unfold carry. apply H.
+      + unfold join. fold join. destruct t.
+        * unfold priq'. split.
+          { apply H1. }
+          { fold priq'. apply IHp.
+            { inversion H. apply H3. }
+            { inversion H0. apply H3. }
+            { right. apply smash_valid.
+              { inversion H. inversion H2.
+                { inversion H4. }
+                { apply H4. } }
+              { inversion H0. inversion H2.
+                { inversion H4. }
+                { apply H4. } } } }
+        * unfold priq'. split.
+          { left. reflexivity. }
+          { fold priq'. apply IHp.
+            { inversion H. apply H3. }
+            { inversion H0. apply H3. }
+            { right. apply smash_valid.
+              { inversion H1.
+                { inversion H2. }
+                { apply H2. } }
+              { inversion H. inversion H2.
+                { inversion H4. }
+                { apply H4. } } } }
+     + destruct t.
+        * unfold join. fold join. unfold priq'. split.
+          { apply H1. }
+          { fold priq'. apply IHp.
+            { inversion H. apply H3. }
+            { inversion H0. apply H3. }
+            { right. apply smash_valid.
+              { inversion H. inversion H2.
+                { inversion H4. }
+                { apply H4. } }
+              { inversion H0. inversion H2.
+                { inversion H4. }
+                { apply H4. } } } }
+        * unfold join. fold join. unfold priq'. split.
+          { right. inversion H. inversion H2.
+            { inversion H4. }
+            { apply H4. } }
+          { fold priq'. apply IHp.
+            { inversion H. apply H3. }
+            { inversion H0. apply H3. }
+            { left. reflexivity. } }
+    + unfold join. unfold carry. simpl. split.
+      * apply H1.
+      * inversion H. apply H3.
+    + simpl. split.
+      * left. reflexivity.
+      * inversion H. apply H3.
+    + destruct t.
+        * unfold join. fold join. unfold priq'. split.
+          { left. reflexivity. }
+          { fold priq'. apply IHp.
+            { inversion H. apply H3. }
+            { inversion H0. apply H3. }
+            { right. apply smash_valid.
+              { inversion H. inversion H2.
+                { inversion H4. inversion H1.
+                  { inversion H5. }
+                  { apply H5. } } 
+                { inversion H0. inversion H2.
+                { inversion H4. }
+                { inversion H4. } } }
+            { inversion H0.
+              { inversion H2.
+                { inversion H4. }
+                { apply H4. } } } } }
+        * unfold join. fold join. unfold priq'. split.
+          { apply H1. }
+          { fold priq'. apply IHp.
+            { inversion H. apply H3. }
+            { inversion H0. apply H3. }
+            { left. reflexivity. } }
+    + destruct t.
+        * unfold join. fold join. unfold priq'. split.
+          { right. inversion H0. inversion H2.
+             { inversion H4. }
+              { apply H4. } }
+          { fold priq'. apply IHp.
+            { inversion H. apply H3. }
+            { inversion H0. apply H3. }
+            { left. reflexivity. } }
+        * unfold join. fold join. unfold priq'. split.
+          { left. reflexivity. }
+          { fold priq'. apply IHp.
+            { inversion H. apply H3. }
+            { inversion H0. apply H3. }
+            { left. reflexivity. } }
+Qed.
+      
 Theorem merge_priq: forall (p: priqueue) (q: priqueue),
   priq p -> priq q -> priq (merge p q).
 Proof.
