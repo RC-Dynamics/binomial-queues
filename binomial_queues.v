@@ -172,21 +172,31 @@ Theorem carry_valid : forall (n: nat) (q: priqueue),
   priq' n q -> forall (t: tree), (t = Leaf \/ pow2heap n t) ->
   priq' n (carry q t).
 Proof.
-  intuition.
-    - rewrite H1. destruct q.
-      + now constructor.
-      + inversion H. simpl. destruct t0.
-        * apply H.
-        * apply H.
-    - induction q.
-      + destruct t.
-        * simpl. split.
-          { right. apply H1. }
-          { reflexivity. }
-        * simpl. reflexivity.
-      + destruct t.
-        * simpl. destruct q, a.
-          { simpl. Admitted.
+  intros n q. generalize dependent n. induction q.
+    - intros. destruct t.
+      + unfold carry. simpl. split.
+        * apply H0.
+        * reflexivity.
+      + simpl. reflexivity.
+    - intros. destruct a, t.
+      + unfold carry. fold carry. unfold priq'. split.
+        * left. reflexivity.
+        * fold priq'. apply IHq.
+          { inversion H. apply H2. }
+          { right. apply smash_valid.
+            { intuition.
+              { inversion H1. } }
+            { inversion H. inversion H1.
+              { inversion H3. }
+              { apply H3. } } }
+      + unfold carry. apply H.
+      + unfold carry. simpl. split.
+        * apply H0.
+        * inversion H. apply H2.
+      + simpl. split.
+        * left. reflexivity.
+        * inversion H. apply H2.
+Qed.
 
 Theorem insert_priq : forall (x: nat) (q: priqueue),
   priq q -> priq (insert x q).
