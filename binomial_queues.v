@@ -202,7 +202,9 @@ Theorem insert_priq : forall (x: nat) (q: priqueue),
   priq q -> priq (insert x q).
 Proof.
   intros. induction q.
-  - unfold priq. simpl. intuition.
+  - unfold priq. simpl. split.
+    + right. apply I.
+    + apply I.
   - inversion H. unfold insert. apply carry_valid.
     + simpl. split.
       * apply H0.
@@ -217,8 +219,8 @@ Proof.
     - intros. destruct q, c.
       + simpl. split.
         * apply H1.
-        * reflexivity.
-      + simpl. reflexivity.
+        * apply I.
+      + simpl. apply I.
       + unfold join. apply carry_valid.
         * apply H0.
         * apply H1.
