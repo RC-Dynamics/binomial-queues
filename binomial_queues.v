@@ -63,33 +63,6 @@ Fixpoint carry (q: list tree) (t: tree) : list tree :=
 Definition insert (x: key) (q: priqueue) : priqueue :=
      carry q (Node x Leaf Leaf).
 
-
-(*  *)
-
-Fixpoint unzip (t: tree) (cont: priqueue -> priqueue) : priqueue :=
-  match t with
-  | Node x t1 t2 => unzip t2 (fun q => Node x t1 Leaf :: cont q)
-  | Leaf => cont nil
-  end.
-
-Compute (unzip (Node 9
-          (Node 4 (Node 3 (Node 1 Leaf Leaf) (Node 1 Leaf Leaf))
-             (Node 3 (Node 2 Leaf Leaf) (Node 5 Leaf Leaf)))
-          (Node 5 (Node 3 (Node 2 Leaf Leaf) (Node 2 Leaf Leaf))
-             (Node 3 (Node 1 Leaf Leaf) (Node 1 Leaf Leaf)))) (fun u => u)).
-
-(* Definição para a função de remoção do valor máximo de uma max heap.  *)
-
-Definition heap_delete_max (t: tree) : priqueue :=
-  match t with
-  | Node x t1 Leaf => unzip t1 (fun u => u)
-  | _ => nil
-  end.
-
-Compute (heap_delete_max (Node 9
-          (Node 4 (Node 3 (Node 1 Leaf Leaf) (Node 1 Leaf Leaf))
-             (Node 3 (Node 2 Leaf Leaf) (Node 5 Leaf Leaf))) Leaf)).
-
 (* Find max retorna o valor máximo em uma priqueue. *)
 
 Fixpoint find_max' (current: key) (q: priqueue) : key :=
@@ -114,7 +87,11 @@ Compute (find_max (Node 1 Leaf Leaf
                      (Node 3 (Node 2 Leaf Leaf) (Node 5 Leaf Leaf))) Leaf
                 :: nil)).
 
-(*  *)
+(*
+  Join adiciona uma árvore numa junção de duas priority queues.
+  Tal procedimento 'simula' uma soma binária entre essas filas e uma árvore
+  podendo resultar numa nova priority queue de tamanho N + 1
+*)
 
 Fixpoint join (p q: priqueue) (t: tree) : priqueue :=
   match p, q, t with
@@ -126,26 +103,6 @@ Fixpoint join (p q: priqueue) (t: tree) : priqueue :=
   | p1 :: p', Leaf :: q', Leaf => p1 :: join p' q' Leaf
   | p1 :: p', Leaf :: q', Node _ _ _ => Leaf :: join p' q' (smash t p1)
   | p1 :: p', q1 :: q', _ => t :: join p' q' (smash p1 q1)
-  end.
-  
-(*  *)
-
- Fixpoint delete_max_aux (m: key) (p: priqueue) : priqueue * priqueue :=
-  match p with
-  | Leaf :: p' => let (j,k) := delete_max_aux m p' in (Leaf::j, k)
-  | Node x t1 Leaf :: p' =>
-       if m >? x
-       then (let (j,k) := delete_max_aux m p'
-             in (Node x t1 Leaf::j,k))
-       else (Leaf::p', heap_delete_max (Node x t1 Leaf))
-  | _ => (nil, nil)
-  end.
-
-Definition delete_max (q: priqueue) : option (key * priqueue) :=
-  match find_max q with
-  | None => None
-  | Some m => let (p',q') := delete_max_aux m q
-                            in Some (m, join p' q' Leaf)
   end.
 
 (* Para facilitar a utilização do join, é criada uma função auxiliar chamada merge. *)
@@ -253,7 +210,14 @@ Proof.
     + simpl. intuition.
 Qed.
 
-(*  *)
+(*
+  O seguinte teorema diz que se duas priqueues de ordem 'n' e uma árvore (heap de potência de dois)
+  são unidas por 'join', então essa junção também é uma priqueue de ordem 'n'.
+  A prova desse teorema é longa, porém cada passo é razoalvemente factivel.
+  O 'truque' que destrava a prova em alguns pontos é criar uma hipótese indutiva genérica o suficiente
+  para casar padrão com todas as variáveis. O procedimento de prova utiliza as provas de carry_valid e smash_valid
+  provadas previamente.
+*)
 
 Theorem join_valid: forall (p: priqueue) (q: priqueue) (n: nat) (c: tree),
   priq' n p -> priq' n q -> (c = Leaf \/ pow2heap n c) -> priq' n (join p q c).
